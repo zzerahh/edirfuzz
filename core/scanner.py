@@ -26,7 +26,7 @@ def load_wordlist(wordlist_path):
 
     return paths
 
-def scan_path(base_url, path, timeout=5.0):
+def scan_path(base_url, path, timeout=5.0, client=None):
     """
     Scan a single path and return structured response information.
     """
@@ -36,11 +36,19 @@ def scan_path(base_url, path, timeout=5.0):
     try:
         start_time = time.perf_counter()
 
-        response = httpx.get(
-            url,
-            timeout=timeout,
-            follow_redirects=False
-        )
+        if client is None:
+            response = httpx.get(
+                url,
+                timeout=timeout,
+                follow_redirects=False
+            )
+    
+        else:
+            response = client.get(
+                url,
+                timeout=timeout,
+                follow_redirects=False
+            )
 
         response_time = time.perf_counter() - start_time
 
@@ -68,7 +76,7 @@ def scan_path(base_url, path, timeout=5.0):
             "classification": classify_response(None),
             "error": str(error)
         }
-        
+
 def scan_wordlist(base_url, wordlist_path, timeout=5.0):
     """
     Scan every path contained in a wordlist.

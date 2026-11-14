@@ -1,3 +1,4 @@
+import httpx
 from core.analyzer import classify_response
 from core.scanner import load_wordlist, scan_path
 
@@ -61,3 +62,16 @@ def test_scan_connection_error():
     assert result["redirect"] is None
     assert result["classification"] == "ERROR"
     assert result["error"] is not None
+
+def test_scan_with_reusable_client():
+    with httpx.Client() as client:
+        result = scan_path(
+            "http://127.0.0.1:5000",
+            "login",
+            client=client
+        )
+
+    assert result["path"] == "/login"
+    assert result["status"] == 200
+    assert result["classification"] == "FOUND"
+    assert result["error"] is None
