@@ -1,0 +1,10 @@
+admin
+login
+dashboard
+uploads
+secret
+backup.zip
+config
+api
+robots.txt
+random123
