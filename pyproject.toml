@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dirpulse"
+name = "edirfuzz"
 version = "1.0.0"
 description = "Enhanced Directory Fuzzer with real-time and adaptive request-rate control"
 requires-python = ">=3.10"
@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-dirpulse = "main:main"
+edirfuzz = "main:main"
 
 [tool.setuptools]
 py-modules = ["main"]

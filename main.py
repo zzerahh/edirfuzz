@@ -61,15 +61,15 @@ class ScanConfig:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="dirpulse",
-        description="DirPulse: Enhanced Directory Fuzzer with live rate control, "
+        prog="edirfuzz",
+        description="edirfuzz: Enhanced Directory Fuzzer with live rate control, "
     "adaptive backoff and scope enforcement.",
         epilog=(
     "examples:\n"
-    "  dirpulse --dry-run\n"
-    "  dirpulse -t http://127.0.0.1:5000 -w wordlists/common.txt\n"
-    "  dirpulse --initial-rate 5 --max-rate 30 --adaptive --format both\n"
-    "  dirpulse -t http://192.0.2.10 --allow-host 192.0.2.10   "
+    "  edirfuzz --dry-run\n"
+    "  edirfuzz -t http://127.0.0.1:5000 -w wordlists/common.txt\n"
+    "  edirfuzz --initial-rate 5 --max-rate 30 --adaptive --format both\n"
+    "  edirfuzz -t http://192.0.2.10 --allow-host 192.0.2.10   "
     "(needs written permission)\n\n"
     "While a scan runs in a terminal, type a number and press Enter "
     "to change req/s live.\n"
@@ -235,11 +235,11 @@ def run(argv=None, input_fn=input) -> int:
     console.print(
         Panel(
             "[bold cyan]"
-            "  ____  _      ____        _          \n"
-            " |  _ \\(_)_ __|  _ \\ _   _| |___  ___ \n"
-            " | | | | | '__| |_) | | | | / __|/ _ \\\n"
-            " | |_| | | |  |  __/| |_| | \\__ \\  __/\n"
-            " |____/|_|_|  |_|    \\__,_|_|___/\\___|\n"
+             "  _____ ____  _      _____               \n"
+            " | ____|  _ \\(_)_ __|  ___|   _ ________\n"
+            " |  _| | | | | | '__| |_ | | | |_  /_  /\n"
+            " | |___| |_| | | |  |  _|| |_| |/ / / / \n"
+            " |_____|____/|_|_|  |_|   \\__,_/___/___|\n"
             "[/bold cyan]\n"
             + escape(LEGAL_BANNER),
             border_style="cyan",
