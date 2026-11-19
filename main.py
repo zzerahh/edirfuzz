@@ -115,7 +115,7 @@ def validate_numbers(args: argparse.Namespace) -> None:
 
 # ---------------------------------------------------------------------- wordlist
 def load_wordlist(path: str) -> tuple[list[str], int]:
-   
+
     wl = Path(path)
     if not wl.is_file():
         raise FileNotFoundError(f"Wordlist not found: {path}")
@@ -210,9 +210,9 @@ def start_rate_listener(scheduler, max_rate: float, stop_event: threading.Event)
 # ------------------------------------------------------------ module integration
 def execute_scan(cfg: ScanConfig, base_url: str, paths: list[str], scope: Scope,
                  stop_event: threading.Event, on_result) -> None:
-    
+
     try:
-        from core.scheduler import RequestScheduler
+        from core.scheduler import RateScheduler
         from core.scanner import Scanner
         adaptive = None
         if cfg.adaptive:
@@ -221,7 +221,10 @@ def execute_scan(cfg: ScanConfig, base_url: str, paths: list[str], scope: Scope,
     except ImportError as exc:
         raise RuntimeError(f"Core module missing: {exc}. Pull the latest main branch.") from exc
 
-    scheduler = RequestScheduler(initial_rate=cfg.initial_rate, max_rate=cfg.max_rate)
+    scheduler = RateScheduler(
+        initial_rate=cfg.initial_rate,
+        max_rate=cfg.max_rate
+    )
     scanner = Scanner(base_url=base_url, scheduler=scheduler, adaptive=adaptive,
                       timeout=cfg.timeout, scope=scope)
     start_rate_listener(scheduler, cfg.max_rate, stop_event)

@@ -27,6 +27,9 @@ def secret():
 def backup():
     return "FAKE BACKUP FILE FOR LAB TESTING"
 
+@app.route("/rate-limited/<path:test_id>")
+def rate_limited(test_id):
+    return "Too Many Requests", 429
 
 if __name__ == "__main__":
     app.run(

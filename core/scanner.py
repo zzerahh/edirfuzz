@@ -1,3 +1,4 @@
+import asyncio
 import time
 import httpx
 
@@ -97,3 +98,93 @@ def scan_wordlist(base_url, wordlist_path, timeout=5.0):
         results.append(result)
 
     return results
+
+class Scanner:
+    """
+    Integration wrapper used by the CLI.
+
+    Reuses the existing scan_path() implementation while routing every
+    request through the shared RateScheduler.
+    """
+
+    def __init__(
+        self,
+        base_url,
+        scheduler,
+        adaptive=None,
+        timeout=5.0,
+        scope=None
+    ):
+        self.base_url = base_url.rstrip("/")
+        self.scheduler = scheduler
+        self.adaptive = adaptive
+        self.timeout = timeout
+        self.scope = scope
+
+    def run(self, paths, on_result=None, stop_event=None):
+        """
+        Scan the supplied paths while respecting the shared scheduler.
+        """
+        asyncio.run(
+            self._run_async(
+                paths,
+                on_result=on_result,
+                stop_event=stop_event
+            )
+        )
+
+    async def _run_async(self, paths, on_result=None, stop_event=None):
+        from core.scope import is_url_in_scope
+
+        with httpx.Client() as client:
+            for path in paths:
+
+                if stop_event is not None and stop_event.is_set():
+                    break
+
+                url = (
+                    self.base_url.rstrip("/")
+                    + "/"
+                    + path.lstrip("/")
+                )
+
+                if self.scope is not None:
+                    if not is_url_in_scope(
+                        url,
+                        self.base_url,
+                        self.scope
+                    ):
+                        continue
+
+                await self.scheduler.acquire()
+
+                result = await asyncio.to_thread(
+                    scan_path,
+                    self.base_url,
+                    path,
+                    self.timeout,
+                    client
+                )
+
+                if self.adaptive is not None:
+                    response_time = result["response_time"]
+                    if response_time is None:
+                        response_time = 0.0
+
+                    new_rate = self.adaptive.record_response(
+                        result["status"],
+                        response_time,
+                        result["error"]
+                    )
+
+                    if new_rate != self.scheduler.rate:
+                        old_rate = self.scheduler.rate
+                        self.scheduler.set_rate(new_rate)
+
+                        print(
+                            f"Adaptive rate changed: "
+                            f"{old_rate:g} -> {new_rate:g} req/s"
+                        )
+
+                if on_result is not None:
+                    on_result(result)
