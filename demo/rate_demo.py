@@ -11,12 +11,10 @@ import sys
 import time
 from pathlib import Path
 
-# Lets `core` be found when this file is run directly
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from core.scheduler import RateScheduler, rate_per_window  # noqa: E402
 
-# Each phase is (seconds to run, requests per second)
 DEFAULT_PHASES = [(3, 5), (3, 15)]
 OUTPUT_FILE = Path("output") / "rate_demo.csv"
 

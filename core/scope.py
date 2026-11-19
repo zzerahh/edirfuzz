@@ -21,7 +21,7 @@ SAFE_DEFAULT_NETWORKS = (
     "203.0.113.0/24",
 )
 ALLOWED_SCHEMES = ("http", "https")
-MIN_IPV4_PREFIX = 16  # refuse scope entries broader than a /16
+MIN_IPV4_PREFIX = 16  
 MIN_IPV6_PREFIX = 48
 _HOSTNAME_RE = re.compile(
     r"^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$"
@@ -106,7 +106,7 @@ def validate_target(target: str, scope: Scope) -> str:
     target = (target or "").strip()
     try:
         parts = urlsplit(target)
-        port = parts.port  # raises ValueError on a bad port
+        port = parts.port  
     except ValueError as exc:
         raise ScopeError(f"Invalid target URL: {exc}") from exc
     if parts.scheme not in ALLOWED_SCHEMES:

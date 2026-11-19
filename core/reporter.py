@@ -50,7 +50,7 @@ def _atomic_write(path: Path, writer) -> None:
     tmp = path.with_name(path.name + ".tmp")
     with open(tmp, "w", newline="", encoding="utf-8") as fh:
         writer(fh)
-    os.replace(tmp, path)  # never leaves a half-written report behind
+    os.replace(tmp, path)
 
 
 class Reporter:
