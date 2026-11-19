@@ -34,7 +34,7 @@ DEFAULT_WORDLIST = "wordlists/common.txt"
 DEFAULT_INITIAL_RATE = 5.0
 DEFAULT_MAX_RATE = 30.0
 DEFAULT_TIMEOUT = 5.0
-HARD_MAX_RATE = 100.0  # absolute safety ceiling, cannot be overridden from the CLI
+HARD_MAX_RATE = 100.0 
 MAX_WORDLIST_ENTRIES = 100_000
 
 console = Console()
@@ -59,22 +59,22 @@ class ScanConfig:
     output_format: str
     output_dir: str = "output"
 
-
-# --------------------------------------------------------------------------- CLI
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="main.py",
-        description="Enhanced Directory Fuzzer: authorized directory/file enumeration with "
-                    "live rate control, adaptive backoff and scope enforcement.",
+        prog="dirpulse",
+        description="DirPulse: Enhanced Directory Fuzzer with live rate control, "
+    "adaptive backoff and scope enforcement.",
         epilog=(
-            "examples:\n"
-            "  python main.py --dry-run\n"
-            "  python main.py -t http://127.0.0.1:5000 -w wordlists/common.txt\n"
-            "  python main.py --initial-rate 5 --max-rate 30 --adaptive --format both\n"
-            "  python main.py -t http://192.0.2.10 --allow-host 192.0.2.10   (needs written permission)\n\n"
-            "While a scan runs in a terminal, type a number and press Enter to change req/s live.\n"
-            "Press Ctrl+C at any time to stop safely; a partial report is saved."
-        ),
+    "examples:\n"
+    "  dirpulse --dry-run\n"
+    "  dirpulse -t http://127.0.0.1:5000 -w wordlists/common.txt\n"
+    "  dirpulse --initial-rate 5 --max-rate 30 --adaptive --format both\n"
+    "  dirpulse -t http://192.0.2.10 --allow-host 192.0.2.10   "
+    "(needs written permission)\n\n"
+    "While a scan runs in a terminal, type a number and press Enter "
+    "to change req/s live.\n"
+    "Press Ctrl+C at any time to stop safely; a partial report is saved."
+),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("-t", "--target", default=DEFAULT_TARGET,
@@ -113,7 +113,6 @@ def validate_numbers(args: argparse.Namespace) -> None:
         raise ScopeError("--initial-rate cannot be higher than --max-rate.")
 
 
-# ---------------------------------------------------------------------- wordlist
 def load_wordlist(path: str) -> tuple[list[str], int]:
 
     wl = Path(path)
@@ -140,7 +139,6 @@ def load_wordlist(path: str) -> tuple[list[str], int]:
     return paths, skipped
 
 
-# --------------------------------------------------------------------- display
 def print_plan(cfg: ScanConfig, base_url: str, paths: list[str], skipped: int, scope: Scope) -> None:
     table = Table(title="Scan plan", show_header=False, title_justify="left")
     table.add_row("Target", escape(base_url))
@@ -157,7 +155,7 @@ def print_plan(cfg: ScanConfig, base_url: str, paths: list[str], skipped: int, s
 def print_result(result: dict) -> None:
     label = result.get("classification") or "UNKNOWN"
     if label == "NOT_FOUND":
-        return  # keep the console readable; every result still goes in the report
+        return  
     style = STATUS_STYLE.get(label, "white")
     detail = f"-> {escape(str(result['redirect']))}" if result.get("redirect") else ""
     if result.get("error"):
@@ -181,7 +179,6 @@ def print_summary(results: list[dict], files: list[Path], partial: bool) -> None
         console.print(f"[green]Report saved:[/green] {escape(str(f))}")
 
 
-# ---------------------------------------------------------------- live control
 def start_rate_listener(scheduler, max_rate: float, stop_event: threading.Event) -> None:
     """Let the operator type a new req/s during a scan (interactive terminals only)."""
     if not sys.stdin or not sys.stdin.isatty():
@@ -207,7 +204,6 @@ def start_rate_listener(scheduler, max_rate: float, stop_event: threading.Event)
     threading.Thread(target=listen, daemon=True, name="rate-listener").start()
 
 
-# ------------------------------------------------------------ module integration
 def execute_scan(cfg: ScanConfig, base_url: str, paths: list[str], scope: Scope,
                  stop_event: threading.Event, on_result) -> None:
 
@@ -231,13 +227,27 @@ def execute_scan(cfg: ScanConfig, base_url: str, paths: list[str], scope: Scope,
     scanner.run(paths, on_result=on_result, stop_event=stop_event)
 
 
-# ------------------------------------------------------------------------- main
 def run(argv=None, input_fn=input) -> int:
     args = build_parser().parse_args(argv)
     cfg = ScanConfig(args.target, args.wordlist, args.initial_rate, args.max_rate, args.timeout,
                      args.adaptive, args.dry_run, args.output_format, args.output_dir)
 
-    console.print(Panel(escape(LEGAL_BANNER), border_style="red"))
+    console.print(
+        Panel(
+            "[bold cyan]"
+            "  ____  _      ____        _          \n"
+            " |  _ \\(_)_ __|  _ \\ _   _| |___  ___ \n"
+            " | | | | | '__| |_) | | | | / __|/ _ \\\n"
+            " | |_| | | |  |  __/| |_| | \\__ \\  __/\n"
+            " |____/|_|_|  |_|    \\__,_|_|___/\\___|\n"
+            "[/bold cyan]\n"
+            + escape(LEGAL_BANNER),
+            border_style="cyan",
+            padding=(1, 2),
+        )
+
+    )    
+    
     try:
         validate_numbers(args)
         scope = Scope.default().extended(args.allow_host)
@@ -308,7 +318,7 @@ def run(argv=None, input_fn=input) -> int:
 def main() -> None:
     try:
         sys.exit(run())
-    except KeyboardInterrupt:  # Ctrl+C during the prompt or startup
+    except KeyboardInterrupt:  
         console.print("\n[yellow]Aborted before scanning. No requests were sent.[/yellow]")
         sys.exit(130)
 
