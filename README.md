@@ -18,7 +18,7 @@ Conventional fuzzers send requests at a fixed speed set before the scan starts, 
 - **Central scheduler:** every request passes through one scheduler with a hard cap of 100 req/s.
 - **Scope enforcement:** every target and redirect is checked against an authorized scope before any request is sent.
 
-Responses are classified as `FOUND` (200), `REDIRECT` (301/302/307/308), `AUTH_REQUIRED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `RATE_LIMITED` (429), `SERVER_ERROR` (5xx) `ERROR` (no response) or `OTHER`.
+Responses are classified as `FOUND` (200), `REDIRECT` (3xx), `AUTH_REQUIRED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `RATE_LIMITED` (429), `SERVER_ERROR` (5xx) or `ERROR` (no response).
 
 **Architecture**
 
