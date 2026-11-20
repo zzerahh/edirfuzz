@@ -135,7 +135,7 @@ edirfuzz -t http://8.8.8.8
 ```bash
 python -m pytest -q
 ```
-<img width="835" height="79" alt="24 tests passed" src="https://github.com/user-attachments/assets/539408b7-2b62-42ea-8261-69c3fdc87353" />
+<img width="592" height="59" alt="Screenshot 2026-11-20 193700" src="https://github.com/user-attachments/assets/c66ee4a1-4818-4996-8abe-d7e8d7c9e146" />
 
 ---
 
