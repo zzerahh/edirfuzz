@@ -52,8 +52,8 @@ def test_live_rate_change():
 
     times = asyncio.run(run())
     gaps = [b - a for a, b in zip(times, times[1:])]
-    assert gaps[0] == pytest.approx(0.2, abs=0.05)    # started at 5 req/s
-    assert sum(gaps[-5:]) / 5 < 0.1                   # ended near 20 req/s
+    assert gaps[0] == pytest.approx(0.2, abs=0.05)    
+    assert sum(gaps[-5:]) / 5 < 0.1                   
 
 
 def test_concurrency_cap():

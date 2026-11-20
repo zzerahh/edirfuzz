@@ -16,14 +16,12 @@ class RateScheduler:
 
         self._max_rate = float(max_rate)
         self._rate = min(float(initial_rate), self._max_rate)
-        self._interval = 1.0 / self._rate      # seconds between requests
-
-        self._next_slot = 0.0                  # time when the next request may go
-        self._lock = asyncio.Lock()            # stops two workers reserving the same slot
+        self._interval = 1.0 / self._rate
+        self._next_slot = 0.0
+        self._lock = asyncio.Lock()   
         self._semaphore = asyncio.Semaphore(max_concurrency)
 
-        # Evidence for the report
-        self.dispatch_times = []               # monotonic timestamps of each request
+        self.dispatch_times = []               
         self.rate_history = [(time.monotonic(), self._rate)]
 
     @property
@@ -54,19 +52,18 @@ class RateScheduler:
         async with self._lock:
             now = time.monotonic()
             if self._next_slot < now:
-                # Scheduler has been idle, so start from now
                 self._next_slot = now
             wait = self._next_slot - now
-            self._next_slot += self._interval  # reserve the next slot for the next caller
+            self._next_slot += self._interval  
 
         if wait > 0:
             await asyncio.sleep(wait)
         self.dispatch_times.append(time.monotonic())
 
     async def __aenter__(self):
-        await self._semaphore.acquire()        # concurrency cap
+        await self._semaphore.acquire()        
         try:
-            await self.acquire()               # rate limit
+            await self.acquire()               
         except BaseException:
             self._semaphore.release()
             raise

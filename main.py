@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Enhanced Directory Fuzzer - CLI and orchestration.
+"""Enhanced Directory Fuzzer - CLI and orchestration (Person 4).
 
 Authorized security testing only. See README.md for the Rules of Engagement.
 """
@@ -34,7 +34,7 @@ DEFAULT_WORDLIST = "wordlists/common.txt"
 DEFAULT_INITIAL_RATE = 5.0
 DEFAULT_MAX_RATE = 30.0
 DEFAULT_TIMEOUT = 5.0
-HARD_MAX_RATE = 100.0  # absolute safety ceiling, cannot be overridden from the CLI
+HARD_MAX_RATE = 100.0 
 MAX_WORDLIST_ENTRIES = 100_000
 
 console = Console()
@@ -59,22 +59,22 @@ class ScanConfig:
     output_format: str
     output_dir: str = "output"
 
-
-# --------------------------------------------------------------------------- CLI
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="main.py",
-        description="Enhanced Directory Fuzzer: authorized directory/file enumeration with "
-                    "live rate control, adaptive backoff and scope enforcement.",
+        prog="edirfuzz",
+        description="edirfuzz: Enhanced Directory Fuzzer with live rate control, "
+    "adaptive backoff and scope enforcement.",
         epilog=(
-            "examples:\n"
-            "  python main.py --dry-run\n"
-            "  python main.py -t http://127.0.0.1:5000 -w wordlists/common.txt\n"
-            "  python main.py --initial-rate 5 --max-rate 30 --adaptive --format both\n"
-            "  python main.py -t http://192.0.2.10 --allow-host 192.0.2.10   (needs written permission)\n\n"
-            "While a scan runs in a terminal, type a number and press Enter to change req/s live.\n"
-            "Press Ctrl+C at any time to stop safely; a partial report is saved."
-        ),
+    "examples:\n"
+    "  edirfuzz --dry-run\n"
+    "  edirfuzz -t http://127.0.0.1:5000 -w wordlists/common.txt\n"
+    "  edirfuzz --initial-rate 5 --max-rate 30 --adaptive --format both\n"
+    "  edirfuzz -t http://192.0.2.10 --allow-host 192.0.2.10   "
+    "(needs written permission)\n\n"
+    "While a scan runs in a terminal, type a number and press Enter "
+    "to change req/s live.\n"
+    "Press Ctrl+C at any time to stop safely; a partial report is saved."
+),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("-t", "--target", default=DEFAULT_TARGET,
@@ -113,14 +113,8 @@ def validate_numbers(args: argparse.Namespace) -> None:
         raise ScopeError("--initial-rate cannot be higher than --max-rate.")
 
 
-# ---------------------------------------------------------------------- wordlist
 def load_wordlist(path: str) -> tuple[list[str], int]:
-    """Load, sanitize and de-duplicate a wordlist. Returns (paths, skipped_count).
 
-    Entries become '/word'. Anything that could change the host of a built URL
-    ('//evil.com', 'http://...', backslashes, whitespace, '..') is skipped, so a
-    hostile wordlist cannot push a request out of scope.
-    """
     wl = Path(path)
     if not wl.is_file():
         raise FileNotFoundError(f"Wordlist not found: {path}")
@@ -145,7 +139,6 @@ def load_wordlist(path: str) -> tuple[list[str], int]:
     return paths, skipped
 
 
-# --------------------------------------------------------------------- display
 def print_plan(cfg: ScanConfig, base_url: str, paths: list[str], skipped: int, scope: Scope) -> None:
     table = Table(title="Scan plan", show_header=False, title_justify="left")
     table.add_row("Target", escape(base_url))
@@ -162,7 +155,7 @@ def print_plan(cfg: ScanConfig, base_url: str, paths: list[str], skipped: int, s
 def print_result(result: dict) -> None:
     label = result.get("classification") or "UNKNOWN"
     if label == "NOT_FOUND":
-        return  # keep the console readable; every result still goes in the report
+        return  
     style = STATUS_STYLE.get(label, "white")
     detail = f"-> {escape(str(result['redirect']))}" if result.get("redirect") else ""
     if result.get("error"):
@@ -186,7 +179,6 @@ def print_summary(results: list[dict], files: list[Path], partial: bool) -> None
         console.print(f"[green]Report saved:[/green] {escape(str(f))}")
 
 
-# ---------------------------------------------------------------- live control
 def start_rate_listener(scheduler, max_rate: float, stop_event: threading.Event) -> None:
     """Let the operator type a new req/s during a scan (interactive terminals only)."""
     if not sys.stdin or not sys.stdin.isatty():
@@ -212,21 +204,11 @@ def start_rate_listener(scheduler, max_rate: float, stop_event: threading.Event)
     threading.Thread(target=listen, daemon=True, name="rate-listener").start()
 
 
-# ------------------------------------------------------------ module integration
 def execute_scan(cfg: ScanConfig, base_url: str, paths: list[str], scope: Scope,
                  stop_event: threading.Event, on_result) -> None:
-    """Glue to the teammates' modules.
 
-    >>> ADJUST HERE if the class/method names differ from the team contract. <<<
-    Assumed API (agree on this with Persons 1-3):
-      RequestScheduler(initial_rate, max_rate)  .set_rate(rps)
-      AdaptiveController(initial_rate, max_rate)
-      Scanner(base_url, scheduler, adaptive, timeout, scope)
-          .run(paths, on_result, stop_event)  -> calls on_result(result_dict) per request
-    Rule: every request must go through the one shared scheduler.
-    """
     try:
-        from core.scheduler import RequestScheduler
+        from core.scheduler import RateScheduler
         from core.scanner import Scanner
         adaptive = None
         if cfg.adaptive:
@@ -235,20 +217,37 @@ def execute_scan(cfg: ScanConfig, base_url: str, paths: list[str], scope: Scope,
     except ImportError as exc:
         raise RuntimeError(f"Core module missing: {exc}. Pull the latest main branch.") from exc
 
-    scheduler = RequestScheduler(initial_rate=cfg.initial_rate, max_rate=cfg.max_rate)
+    scheduler = RateScheduler(
+        initial_rate=cfg.initial_rate,
+        max_rate=cfg.max_rate
+    )
     scanner = Scanner(base_url=base_url, scheduler=scheduler, adaptive=adaptive,
                       timeout=cfg.timeout, scope=scope)
     start_rate_listener(scheduler, cfg.max_rate, stop_event)
     scanner.run(paths, on_result=on_result, stop_event=stop_event)
 
 
-# ------------------------------------------------------------------------- main
 def run(argv=None, input_fn=input) -> int:
     args = build_parser().parse_args(argv)
     cfg = ScanConfig(args.target, args.wordlist, args.initial_rate, args.max_rate, args.timeout,
                      args.adaptive, args.dry_run, args.output_format, args.output_dir)
 
-    console.print(Panel(escape(LEGAL_BANNER), border_style="red"))
+    console.print(
+        Panel(
+            "[bold cyan]"
+             "  _____ ____  _      _____               \n"
+            " | ____|  _ \\(_)_ __|  ___|   _ ________\n"
+            " |  _| | | | | | '__| |_ | | | |_  /_  /\n"
+            " | |___| |_| | | |  |  _|| |_| |/ / / / \n"
+            " |_____|____/|_|_|  |_|   \\__,_/___/___|\n"
+            "[/bold cyan]\n"
+            + escape(LEGAL_BANNER),
+            border_style="cyan",
+            padding=(1, 2),
+        )
+
+    )    
+    
     try:
         validate_numbers(args)
         scope = Scope.default().extended(args.allow_host)
@@ -319,7 +318,7 @@ def run(argv=None, input_fn=input) -> int:
 def main() -> None:
     try:
         sys.exit(run())
-    except KeyboardInterrupt:  # Ctrl+C during the prompt or startup
+    except KeyboardInterrupt:  
         console.print("\n[yellow]Aborted before scanning. No requests were sent.[/yellow]")
         sys.exit(130)
 
